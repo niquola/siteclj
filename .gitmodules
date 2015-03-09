@@ -1,0 +1,6 @@
+[submodule "route-map"]
+	path = route-map
+	url = https://github.com/niquola/route-map.git
+[submodule "embed/route-map"]
+	path = embed/route-map
+	url = https://github.com/niquola/route-map.git
