@@ -3,14 +3,21 @@
     [siteclj.db :as db]
     [clojure.java.jdbc :as jdbc]))
 
+(def base-query
+  {:select [:*]
+   :from [:news]})
+
 (defn list-news [& [params]]
-  (db/q "SELECT * FROM news"))
+  (db/q*
+    (merge
+      base-query
+      {:order [:updated_at :desc]})))
 
 (defn get-news [id]
   (db/q-one*
-    {:select [:*]
-     :from [:news]
-     :where [:= :id id]}))
+    (merge
+      base-query
+      {:where [:= :id id]})))
 
 (defn save-news [data]
   (db/i! :news data))
