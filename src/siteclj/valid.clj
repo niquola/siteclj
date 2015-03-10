@@ -28,3 +28,10 @@
     (fn [er [k v]]
       (reduce (fn [er v] (validate-key er x k v)) er v)
       ) {} vs))
+
+(defn validation [h validator]
+  (fn [data]
+    (let [errors (validate validator data)]
+      (if (empty? errors)
+        (h data)
+        {:status :error :data data :errors errors}))))

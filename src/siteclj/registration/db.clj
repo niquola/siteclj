@@ -3,6 +3,9 @@
     [siteclj.db :as db]
     [clojure.java.jdbc :as jdbc]))
 
+(defn uuid  []  (str  (java.util.UUID/randomUUID)))
+
+
 (defn save-registration [data]
   (db/i! :registrations data))
 
@@ -20,11 +23,11 @@
              [:= :password password]]
      :limit 1}))
 
-(check-credentials "nicola" "nicola")
 
-(comment
-  "migrations"
-  (db/e! "DROP TABLE users; DROP TABLE registrations")
+(defn rollback []
+  (db/e! "DROP TABLE users; DROP TABLE registrations; DROP TABLE sessions; DROP TABLE sessions_history"))
+
+(defn migrate []
   (db/e!
     (jdbc/create-table-ddl
       :users
@@ -59,4 +62,8 @@
       [:id :SERIAL "PRIMARY KEY"]
       [:active :boolean "DEFAULT true"]
       [:email :text "NOT NULL" "UNIQUE"]
-      [:activation_key :text "NOT NULL"])))
+      [:activation_key :text "NOT NULL"]
+      [:created_at :timestamp "DEFAULT CURRENT_TIMESTAMP"])))
+(comment
+  (rollback)
+  (migrate))
