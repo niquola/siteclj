@@ -5,17 +5,20 @@
             [siteclj.views :as vs]
             [siteclj.registration.ctrl :as src]
             [siteclj.news.ctrl :as snc]
+            [ring.middleware.resource :as rmr]
             [route-map :as rm]))
 
 (defn ok [cnt]
   {:body  cnt
    :status 200})
 
-(defn index  [{params :params :as req}]
-  (ok (vs/main req)))
+(defn view [v]
+  (fn [req]
+    (ok (v req))))
 
 (def router
-  {:GET {:fn #'index}
+  {:GET {:fn (view #'vs/main)}
+   "about" {:GET {:fn (view #'vs/about)}}
    "news" snc/routes
    "sign-up" src/routes })
 
@@ -34,10 +37,24 @@
     (println "\n\nDispatching "  (:request-method req) " "  (:uri req) " to "  (pr-str handler))
     (handler req)))
 
+(defn user-session-mw [h]
+  (fn [{{sid :id} :session :as req}]
+    (if sid
+      (let [user (src/user-by-session sid)
+            resp (h (assoc req :current-user user))
+            sid (or (get-in resp [:session :id]) sid)]
+        (if (or (:destroy_session resp) (nil? user))
+          resp
+          (assoc resp :session {:id sid})))
+      (h req))))
+
 (def app
   (-> dispatch
+      (user-session-mw)
       (resolve-route)
-      (handler/site)))
+      (handler/site)
+      (rmr/wrap-resource "public")))
+
 
 (defn start  []
   (def stop
@@ -47,6 +64,4 @@
   (start)
   (stop)
   (require '[vinyasa.pull :as vp])
-  (vp/pull 'com.draines/postal)
-
-  )
+  (vp/pull 'com.draines/postal))

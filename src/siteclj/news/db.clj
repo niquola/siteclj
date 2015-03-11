@@ -27,6 +27,7 @@
     (jdbc/create-table-ddl
       :news
       [:id :SERIAL "PRIMARY KEY"]
+      [:user_id :bigint]
       [:title :text "NOT NULL"]
       [:abstract :text "NOT NULL"]
       [:content  :text  "NOT NULL"]
@@ -37,6 +38,8 @@
   (db/e! "DROP TABLE IF EXISTS news"))
 
 (comment
+  (rollback)
+  (migrate)
   (db/i!
     :news
     {:title "New article" :abstract "abstract" :content "Content"}))

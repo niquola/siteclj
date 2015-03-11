@@ -10,24 +10,48 @@
 (defn sign-up  [{params :params :as req}]
   (ok (v/sign-up req)))
 
-(defn start [{{email :email} :params :as req}]
-  (let [res (sru/start-registration email)]
-    (if (= (:status res) :error)
-      (ok (v/sign-up (assoc req :error (:message res))))
-      (ok (pr-str res)))))
+
 
 (defn sign-up!  [{params :params :as req}]
-  (let [res (sru/register params)]
-    (if (= :ok (:status res))
-      (-> (rur/redirect "/") (assoc :flash "Created"))
-      (ok (v/sign-up (merge req res))))))
+  (let [res (sru/complete-registration params)]
+    (if (= :error (:status res))
+      (ok (v/fill-profile (merge req res {:member params})))
+      (-> (rur/redirect "/sign-up/sign-in") (assoc :flash "Created")))))
 
-(defn register [{{akey :activation_key} :params}]
-  (ok (pr-str (sru/registration-by-key akey))))
+(defn register [{{akey :activation_key} :params :as req}]
+  (let [regi (sru/registration-by-key akey)]
+    (ok (v/fill-profile (assoc req :registration regi)))))
+
+(defn sign-up-in! [{{pass :password email :email :as params} :params :as req}]
+  (if (and pass (not (sru/email-uniq? email)))
+    ;; sign in
+    (let [res (sru/start-session params)]
+      (if (= (:status res) :error)
+        (-> (rur/redirect  (str "/?error=" (:message res))))
+        (-> (rur/redirect "/")
+            (assoc :session {:id (:id res)}))))
+    ;; sign up
+    (let [res (sru/start-registration email)]
+      (if (= (:status res) :error)
+        (-> (rur/redirect "/")
+            (assoc :flash (:message res)))
+        (ok (v/key-emailed (assoc req :data res)))))))
+
+(defn sign-out [{{sid :id} :session :as req}]
+  (sru/stop-session sid)
+  (-> (rur/redirect "/")
+      (assoc :destroy_session true)))
+
+(defn user-by-session [sid]
+  (sru/user-by-session sid))
+
+(defn profile [req]
+  (ok (v/profile req)))
 
 (def routes
   {:GET {:fn #'sign-up}
-   "start" {:POST {:fn #'start}}
-   :POST {:fn #'sign-up!}
-   [:activation_key] {:GET {:fn #'register}}
-   })
+   :POST {:fn #'sign-up-in!}
+   "profile" {:GET {:fn #'profile}}
+   "sign-out" {:GET {:fn #'sign-out}}
+   [:activation_key] {:GET {:fn #'register}
+                      :POST {:fn #'sign-up!}}})

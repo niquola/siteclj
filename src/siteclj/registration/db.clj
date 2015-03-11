@@ -5,7 +5,6 @@
 
 (defn uuid  []  (str  (java.util.UUID/randomUUID)))
 
-
 (defn save-registration [data]
   (db/i! :registrations data))
 
@@ -28,7 +27,7 @@
 (defn rollback []
   (->>
     (map
-      (fn [tbl] (str "DROP TABLE IF EXISTS " (name tbl) "; "))
+      (fn [tbl] (str "DROP TABLE IF EXISTS " (name tbl) " CASCADE; "))
       [:users :registrations :sessions_history :sessions])
     (apply str)
     (db/e!)))
@@ -40,6 +39,10 @@
       [:id :SERIAL "PRIMARY KEY"]
       [:admin :boolean]
       [:active :boolean "DEFAULT true"]
+      [:first_name :text]
+      [:last_name :text]
+      [:phone :text]
+      [:organization :text]
       [:email :text "NOT NULL" "UNIQUE"]
       [:login :text "NOT NULL" "UNIQUE"]
       [:password :text]))
@@ -47,18 +50,9 @@
   (db/e!
     (jdbc/create-table-ddl
       :sessions
-      [:id :SERIAL "PRIMARY KEY"]
+      [:id :uuid "PRIMARY KEY"]
       [:user_id :bigint]
       [:started_at :timestamp "DEFAULT CURRENT_TIMESTAMP"]
-      [:expires_at :timestamp]
-      [:completed_at :timestamp]))
-
-  (db/e!
-    (jdbc/create-table-ddl
-      :sessions_history
-      [:id :SERIAL "PRIMARY KEY"]
-      [:user_id :bigint]
-      [:started_at :timestamp]
       [:expires_at :timestamp]
       [:completed_at :timestamp]))
 
@@ -67,9 +61,10 @@
       :registrations
       [:id :SERIAL "PRIMARY KEY"]
       [:active :boolean "DEFAULT true"]
-      [:email :text "NOT NULL" "UNIQUE"]
+      [:email :text "NOT NULL"]
       [:activation_key :text "NOT NULL"]
       [:created_at :timestamp "DEFAULT CURRENT_TIMESTAMP"])))
+
 (comment
   (rollback)
   (migrate))
