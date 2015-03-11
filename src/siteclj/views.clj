@@ -20,7 +20,7 @@
     [:head
      [:title "fhirbase"]
      (include-css "//cdnjs.cloudflare.com/ajax/libs/materialize/0.95.3/css/materialize.min.css")
-     [:body
+     [:body.grey.lighten-3
       [:nav.light-blue.darken-4 {:role "navigation"}
        [:div.nav-wrapper.container
         [:a#logo-container.brand-logo

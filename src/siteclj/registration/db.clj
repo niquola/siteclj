@@ -24,8 +24,14 @@
      :limit 1}))
 
 
+
 (defn rollback []
-  (db/e! "DROP TABLE users; DROP TABLE registrations; DROP TABLE sessions; DROP TABLE sessions_history"))
+  (->>
+    (map
+      (fn [tbl] (str "DROP TABLE IF EXISTS " (name tbl) "; "))
+      [:users :registrations :sessions_history :sessions])
+    (apply str)
+    (db/e!)))
 
 (defn migrate []
   (db/e!

@@ -6,19 +6,23 @@
 
 (defn uuid  []  (str  (java.util.UUID/randomUUID)))
 
-(defn email-uniq? [data]
-  (if (db/q-one* {:select [:*]
-                  :from [:users]
-                  :where [:= :email (:email data)]})
-    {:status :error :message (str "Email [" (:email data) "] already taken")}
-    data))
+(defn email-uniq? [email]
+  (nil? (db/q-one* {:select [:*]
+                    :from [:registrations]
+                    :where [:= :email (:email email)]})))
 
-(defn save-registration [data]
-  (db/i! :registrations
-         (merge
-           (select-keys data [:email])
-           {:activation_key (uuid)})))
+(defn start-registration [email]
+  (if (email-uniq? email)
+    (db/i!  :registrations
+           {:email email
+            :activation_key (uuid)})
+    {:status :error :message "Email already taken"}))
 
+(defn registration-by-key [k]
+  (db/q-one*
+    {:select [:*]
+     :from [:registrations]
+     :where [:= :activation_key k]}))
 
 (defn check-activation-key [data]
   (if-let [registration
@@ -28,26 +32,30 @@
     (assoc data registration)
     {:status :error :message (str "No registration for key " (:key data))}))
 
-(defn user-from-registration [req]
-  (db/i!
-    (merge (select-keys reg [:email]))))
+(defn register [& args])
 
-(su/defcase start-registration
-  (sv/validation {:email [sv/not-blank?]} )
-  (su/intercept-error email-uniq?)
-  save-registration)
 
-(su/defcase start-activation
-  (sv/validation {:activation_key [sv/not-blank?]})
-  (su/intercept-error check-activation-key))
+(comment
+  (defn user-from-registration [req]
+    (db/i!
+      (merge (select-keys reg [:email]))))
+  (su/defcase start-registration
+    (sv/validation {:email [sv/not-blank?]} )
+    (su/intercept-error email-uniq?)
+    save-registration)
 
-(su/defcase register
-  (sv/validation {:login [sv/not-blank?]
-                  :email [sv/not-blank?]
-                  :password [sv/not-blank?]
-                  [:password :password_confirmation] [=]
-                  :activation_key [sv/not-blank?]})
-  (su/intercept-error check-activation-key))
+  (su/defcase start-activation
+    (sv/validation {:activation_key [sv/not-blank?]})
+    (su/intercept-error check-activation-key))
+
+  (su/defcase register
+    (sv/validation {:login [sv/not-blank?]
+                    :email [sv/not-blank?]
+                    :password [sv/not-blank?]
+                    [:password :password_confirmation] [=]
+                    :activation_key [sv/not-blank?]})
+    (su/intercept-error check-activation-key))
+  )
 
 (comment
   (start-registration {:email "nos@gmail.com"})

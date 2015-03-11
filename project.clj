@@ -17,6 +17,7 @@
                  [honeysql "0.4.3"]
                  [clj-time "0.9.0"]
                  [clj-sql-up "0.3.5"]
+                 [com.draines/postal "1.11.3"]
                  [garden "1.2.5"]]
   :profiles
   {:dev {:plugins       [[lein-ancient "0.6.4"]]

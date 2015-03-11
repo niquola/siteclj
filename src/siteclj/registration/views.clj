@@ -9,6 +9,22 @@
     (sv/html-layout
       req
       [:div.container
+       [:br]
+       [:form.card {:action (sv/url "sign-up"  "start") :method "POST"}
+        [:div.card-content
+         [:span.card-title {:style "color: black;" }"Registration"]
+         [:p "To start registration enter you email"]
+         [:br]
+         [:div (input {:name :email :type :email})]]
+        [:div.card-action
+         [:button.waves-effect.waves-light.btn "Register"]
+         ]]])))
+
+(defn fill-profile [{member :member errors :errors :as req}]
+  (let [input (sv/mk-input {:data member :errors errors})]
+    (sv/html-layout
+      req
+      [:div.container
        [:div.row
         [:form.col.s12 {:action (sv/url "sign-up") :method "POST"}
          [:div.row

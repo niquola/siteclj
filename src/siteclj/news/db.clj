@@ -22,9 +22,7 @@
 (defn save-news [data]
   (db/i! :news data))
 
-(comment
-  "migrations"
-  (db/e! "TRUNCATE news")
+(defn migrate []
   (db/e!
     (jdbc/create-table-ddl
       :news
@@ -33,8 +31,12 @@
       [:abstract :text "NOT NULL"]
       [:content  :text  "NOT NULL"]
       [:created_at :timestamp "DEFAULT CURRENT_TIMESTAMP"]
-      [:updated_at :timestamp "DEFAULT CURRENT_TIMESTAMP"]))
+      [:updated_at :timestamp "DEFAULT CURRENT_TIMESTAMP"])))
 
+(defn rollback []
+  (db/e! "DROP TABLE IF EXISTS news"))
+
+(comment
   (db/i!
     :news
     {:title "New article" :abstract "abstract" :content "Content"}))

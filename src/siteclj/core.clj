@@ -47,7 +47,6 @@
   (start)
   (stop)
   (require '[vinyasa.pull :as vp])
-  (vp/pull 'prismatic/schema)
-  (vp/pull 'markdown-clj)
-  (vp/pull 'hiccup)
-  (vp/pull 'garden))
+  (vp/pull 'com.draines/postal)
+
+  )
